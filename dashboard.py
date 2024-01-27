@@ -92,7 +92,7 @@ def overview_data( data ):
 
     return None
 
-def portifolio_density( data, geofile ):
+def portifolio_density( data ):
     #=======================
     # Density of Portifolio
     #=======================
@@ -121,12 +121,12 @@ def portifolio_density( data, geofile ):
     df=data.copy()
     df = data[['price', 'zipcode']].groupby( 'zipcode' ).mean().reset_index().rename(columns={'zipcode': 'ZIP', 'price': 'PRICE'})
     #df.columns=['ZIP', 'PRICE']
-    geofile = geofile[geofile['ZIP'].isin( df['ZIP'].tolist()) ]
+    #geofile = geofile[geofile['ZIP'].isin( df['ZIP'].tolist()) ]
 
 
     region_price_map = folium.Map( location=[data['lat'].mean(), data['long'].mean()], default_zoom_start=15)
 
-    region_price_map.choropleth( data = df, geo_data=geofile, columns=['ZIP', 'PRICE'], key_on='feature.properties.ZIP', fill_color='YlOrRd', fill_opacity = 0.7, line_opacity = 0.2, legend_name='AVG PRICE')
+    #region_price_map.choropleth( data = df, columns=['ZIP', 'PRICE'], key_on='feature.properties.ZIP', fill_color='YlOrRd', fill_opacity = 0.7, line_opacity = 0.2, legend_name='AVG PRICE')
 
     with c2:
         folium_static( region_price_map )
@@ -257,12 +257,12 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path = 'kc_house_data.csv'
+    path = 'data/raw/data_raw.csv'
     data = get_data(path)
 
     # get geofile
-    url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
-    geofile = get_geofile( url )
+    #url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
+    #geofile = get_geofile( url )
     
 
     #Transformation
@@ -271,149 +271,10 @@ if __name__ == '__main__':
     #Gráficos de Overview
     overview_data( data )
 
-    portifolio_density( data, geofile )
+    portifolio_density( data )
 
     commercial_distribution( data )
 
     histogram_graph( data )
 
     attributes_distribution( data )
-
-
-    #loading
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
