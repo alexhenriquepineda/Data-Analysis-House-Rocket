@@ -1,6 +1,6 @@
 # Data Analysis House Rocket
 
-Link to Web App: https://analytics-houserocket-alx.herokuapp.com/
+Link to Web App: https://data-analysis-house-rocket.streamlit.app/
 
 
 House Rocket is a digital platform whose business model is the purchase and sale of real estate using technology. Your main strategy is to buy good houses in great locations at low prices and then resell them later at higher prices. The greater the difference between buying and selling, the greater the company's profit and therefore the greater its revenue.
