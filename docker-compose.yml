@@ -1,0 +1,10 @@
+version: '3'
+services:
+  da-house-rocket:
+    image: da-house-rocket
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app
+    command: ["streamlit", "run", "--reload", "app/dashboard.py"]
