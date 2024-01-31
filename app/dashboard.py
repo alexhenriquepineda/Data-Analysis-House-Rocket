@@ -25,6 +25,28 @@ def get_geofile( url ):
     geofile = geopandas.read_file( url )
     return geofile
 
+def set_title():
+    st.title("Real Estate Market Exploration in Seattle")
+
+    text = """
+    In this study, we aim to deepen our analysis of the existing correlations between the physical characteristics of a property, such as its size and number of rooms, 
+    with its price and location. The main focus is to understand the underlying factors influencing the property values in Seattle, one of the most dynamic and challenging 
+    cities in the United States. The data used were obtained from the Kaggle platform, well-known for its Machine Learning competitions.
+
+    The presented analysis discusses the mentioned variables and examines how they impact both the rental cost and the total value of the property, considering additional 
+    charges not specified on Kaggle. We intend to comprehend, for example, how the location in a particular neighborhood can influence the rental value. Additionally, 
+    we will investigate the significance of other physical characteristics of the property, such as the square footage, the number of bathrooms and bedrooms, among others, 
+    in determining the total sales or rental value. We will also highlight the most expensive and affordable neighborhoods in the city.
+
+    It is important to emphasize that this study was conducted strictly for educational purposes, as there is uncertainty regarding the impartiality or possible gaps and 
+    errors in the dataset, as it has not undergone any validation process.
+
+    So, welcome to our exploratory journey into the real estate market of Seattle!
+    """
+
+    st.text_area("Introduction", text, height=350)
+
+
 def set_feature( data ):
     #add new features
 
@@ -264,7 +286,7 @@ if __name__ == '__main__':
     #url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
     #geofile = get_geofile( url )
     
-
+    set_title()
     #Transformation
     data = set_feature( data )
 
