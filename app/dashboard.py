@@ -1,26 +1,24 @@
 import math
-from datetime import datetime
+import folium
+import geopandas
 import numpy as np
 import pandas as pd
 import streamlit as st
-import folium
-import geopandas
-from streamlit_folium import folium_static
-from folium.plugins import MarkerCluster
-
 import plotly.express as px
 import plotly.graph_objs as go
-from matplotlib import pyplot as plt
-import seaborn as sns
+
+from datetime import datetime
+from folium.plugins import MarkerCluster
 from plotly.subplots import make_subplots
-
-
 from streamlit_folium import folium_static
+
+from text_file import introduction, target_analysis
+
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
 st.set_page_config( layout='wide')
 
-@st.cache( allow_output_mutation=True)
+@st.cache_data()
 def get_data( path ):
     data = pd.read_csv(path)
 
@@ -34,23 +32,7 @@ def get_geofile( url ):
 def set_title():
     st.title("Real Estate Market Exploration in Seattle")
 
-    text = """
-    In this study, we aim to deepen our analysis of the existing correlations between the physical characteristics of a property, such as its size and number of rooms, 
-    with its price and location. The main focus is to understand the underlying factors influencing the property values in Seattle, one of the most dynamic and challenging 
-    cities in the United States. The data used were obtained from the Kaggle platform, well-known for its Machine Learning competitions.
-
-    The presented analysis discusses the mentioned variables and examines how they impact both the rental cost and the total value of the property, considering additional 
-    charges not specified on Kaggle. We intend to comprehend, for example, how the location in a particular neighborhood can influence the rental value. Additionally, 
-    we will investigate the significance of other physical characteristics of the property, such as the square footage, the number of bathrooms and bedrooms, among others, 
-    in determining the total sales or rental value. We will also highlight the most expensive and affordable neighborhoods in the city.
-
-    It is important to emphasize that this study was conducted strictly for educational purposes, as there is uncertainty regarding the impartiality or possible gaps and 
-    errors in the dataset, as it has not undergone any validation process.
-
-    So, welcome to our exploratory journey into the real estate market of Seattle!
-    """
-
-    st.text_area("Introduction", text, height=350)
+    st.text_area("Introduction", introduction, height=350)
 
 
 def set_feature( data ):
@@ -70,25 +52,11 @@ def overview_data( data ):
     # DATA OVERVIEW
     #===============
 
-    #f_attributes = st.sidebar.multiselect( 'Enter COLUMNS', data.columns)
-    #f_zipcode = st.sidebar.multiselect('Enter ZIPCODE', data['zipcode'].unique())
-
     st.title( 'DATA OVERVIEW' )
 
     numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
     numerics_columns = data.select_dtypes(include=numerics)
     no_numerics_columns = data.select_dtypes(exclude=numerics)
-
-
-
-    #if ( f_zipcode != [] ) & ( f_attributes != [] ):
-    #    data = data.loc[data['zipcode'].isin( f_zipcode ), f_attributes]
-    #elif ( f_zipcode != [] ) & (f_attributes == [] ):
-    #    data = data.loc[data['zipcode'].isin(f_zipcode), :]  
-    #elif (f_zipcode == [] ) & ( f_attributes != []):
-    #    data = data.loc[:, f_attributes]
-    #else:
-    #    data = data.copy()
 
     st.dataframe( data.head() )
 
@@ -110,14 +78,33 @@ def overview_data( data ):
     c1.dataframe( df1, height=660 )
 
     text = f"""
-        1- In this dataset we have {data.shape[0]} houses and {data.shape[1]} attributes. With {numerics_columns.shape[1]} numerics attributes and {no_numerics_columns.shape[1]} non-numeric attribute;
+    Data Dictionary:
+        id: Unique identifier for each property
+        price: Price of the property in dollars
+        bedrooms: Number of bedrooms in the property
+        bathrooms: Number of bathrooms in the property
+        sqft_living: Total living space area in square feet
+        sqft_lot: Total lot area in square feet
+        floors: Number of floors in the property
+        waterfront: Binary indicator (0 or 1) for waterfront property
+        view: Rating of the property's view (typically from 0 to 4)
+        condition: Overall condition rating of the property (typically from 1 to 5)
+        grade: Overall grade given to the housing unit, based on King County grading system
+        sqft_above: Area of the property above ground level in square feet
+        sqft_basement: Area of the property's basement in square feet
+        yr_built: Year the property was built
+        yr_renovated: Year of the last renovation
+        zipcode: Zip code of the property location
+        lat: Latitude coordinate of the property
+        long: Longitude coordinate of the property
 
+
+    Overview:
+        1- In this dataset we have {data.shape[0]} houses and {data.shape[1]} attributes. With {numerics_columns.shape[1]} numerics attributes and {no_numerics_columns.shape[1]} non-numeric attribute;
         2- In this sample, we have {len(data["zipcode"].unique())} zipcodes available to analysis; 
     """
 
     c2.text_area("Overview", text, height=700)
-
-
 
     return None
 
@@ -162,11 +149,7 @@ def univariate_analysis(data):
 
     st.dataframe( data[["price"]].describe().T)
 
-    text = """
-    In these graphs, it is evident that numerous outliers exist in the price attribute. Additionally, there is an asymmetric distribution to the left, characterized by a high concentration of data falling within the range of $300,000 to $600,000
-    """
-
-    st.text_area("Target Analysis", text, height=100)
+    st.text_area("Target Analysis", target_analysis, height=100)
 
     # Criação de subplots
     num_plots = len(data.drop(["id", "date", "lat", "long"], axis=1).columns)
