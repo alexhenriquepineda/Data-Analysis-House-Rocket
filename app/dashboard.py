@@ -19,7 +19,7 @@ pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
 st.set_page_config( layout='wide')
 
-
+@st.cache( allow_output_mutation=True)
 def get_data( path ):
     data = pd.read_csv(path)
 
@@ -338,8 +338,9 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path_data = os.getcwd() + '/dataset/kc_house_data.csv'
-    data = pd.read_csv(path_data)
+    path_data = "/dataset/kc_house_data.csv"
+    data = get_data(path_data)
+    #data = pd.read_csv(path_data)
 
     # get geofile
     #url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
