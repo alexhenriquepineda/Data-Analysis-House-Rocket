@@ -337,7 +337,7 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path = '../data/raw/data_raw.csv'
+    path = '/data/raw/data_raw.csv'
     data = get_data(path)
 
     # get geofile
