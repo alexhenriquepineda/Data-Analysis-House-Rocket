@@ -6,3 +6,4 @@ ipywidgets==8.1.1
 streamlit==1.30.0
 streamlit-folium==0.18.0
 geopandas==0.14.2
+statsmodels==0.14.1
