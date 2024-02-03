@@ -338,12 +338,8 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    file_path = 'dataset/kc_house_data.csv'
-
-    # Lê o arquivo CSV usando o pandas
-    data = pd.read_csv(file_path)
-    #path = '/data/raw/data_raw.csv'
-    #data = get_data(path)
+    path_data = os.getcwd() + '/dataset/kc_house_data.csv'
+    data = pd.read_csv(path_data)
 
     # get geofile
     #url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
