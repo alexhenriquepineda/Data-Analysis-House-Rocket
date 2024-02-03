@@ -6,13 +6,13 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objs as go
-
+import statsmodels as sm
 from datetime import datetime
 from folium.plugins import MarkerCluster
 from plotly.subplots import make_subplots
 from streamlit_folium import folium_static
 
-from text_file import introduction, target_analysis
+from text_file import introduction, target_analysis, dictionary
 
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
@@ -36,12 +36,7 @@ def set_title():
 
 
 def set_feature( data ):
-    #add new features
 
-    #convert to m2
-    #data['sqft_lot'] = data['sqft_lot'].apply(lambda x: x / 10,76)
-
-    #add feature price/m2
     data['price_m2'] = data['price'] / (data['sqft_lot'] * 0.092903)
 
     return data
@@ -62,7 +57,6 @@ def overview_data( data ):
 
     c1, c2 = st.columns( (1,1) )
 
-    #Statistic Descriptive
     num_attributes = data.select_dtypes( include=['int64', 'float64'] )
     media = pd.DataFrame( num_attributes.apply( np.mean ) )
     mediana = pd.DataFrame( num_attributes.apply( np.median ) )
@@ -77,29 +71,8 @@ def overview_data( data ):
     c1.header( 'Descriptive Analysis' )
     c1.dataframe( df1, height=660 )
 
-    text = f"""
-    Data Dictionary:
-        id: Unique identifier for each property
-        price: Price of the property in dollars
-        bedrooms: Number of bedrooms in the property
-        bathrooms: Number of bathrooms in the property
-        sqft_living: Total living space area in square feet
-        sqft_lot: Total lot area in square feet
-        floors: Number of floors in the property
-        waterfront: Binary indicator (0 or 1) for waterfront property
-        view: Rating of the property's view (typically from 0 to 4)
-        condition: Overall condition rating of the property (typically from 1 to 5)
-        grade: Overall grade given to the housing unit, based on King County grading system
-        sqft_above: Area of the property above ground level in square feet
-        sqft_basement: Area of the property's basement in square feet
-        yr_built: Year the property was built
-        yr_renovated: Year of the last renovation
-        zipcode: Zip code of the property location
-        lat: Latitude coordinate of the property
-        long: Longitude coordinate of the property
-
-
-    Overview:
+    text = f"""{dictionary}
+Overview:
         1- In this dataset we have {data.shape[0]} houses and {data.shape[1]} attributes. With {numerics_columns.shape[1]} numerics attributes and {no_numerics_columns.shape[1]} non-numeric attribute;
         2- In this sample, we have {len(data["zipcode"].unique())} zipcodes available to analysis; 
     """
@@ -151,33 +124,51 @@ def univariate_analysis(data):
 
     st.text_area("Target Analysis", target_analysis, height=100)
 
-    # Criação de subplots
     num_plots = len(data.drop(["id", "date", "lat", "long"], axis=1).columns)
-    num_rows = math.ceil(num_plots / 3)  # Calcular o número de linhas necessárias
+    num_rows = math.ceil(num_plots / 3)
     fig = make_subplots(rows=num_rows, cols=3, subplot_titles=data.drop(["id", "date", "lat", "long"], axis=1).columns)
 
-    # Adição de histogramas aos subplots
     for i, column in enumerate(data.drop(["id", "date", "lat", "long"], axis=1).columns):
-        row = math.ceil((i + 1) / 3)  # Calcular o número da linha para o subplot atual
-        col = (i % 3) + 1  # Calcular o número da coluna para o subplot atual
+        row = math.ceil((i + 1) / 3)
+        col = (i % 3) + 1
         histogram = go.Histogram(x=data[column], name=column)
         fig.add_trace(histogram, row=row, col=col)
 
-
-    # Ajuste do tamanho dos gráficos
     fig.update_layout(
         title_text="Attributes distribution",
         showlegend=False,
-        height=2000,  # Ajuste a altura desejada
-        width=1500   # Ajuste a largura desejada
+        height=2000,
+        width=1500
     )
     st.plotly_chart(fig)
-
 
     return None
 
 def bivariate_analysis(data):
     st.header( 'Bivariate Analysis' )
+
+
+    num_plots = len(data.drop(["id", "date", "lat", "long"], axis=1).columns)
+    num_rows = math.ceil(num_plots / 3)
+    fig = make_subplots(rows=num_rows, cols=3, subplot_titles=data.drop(["id", "date", "lat", "long"], axis=1).columns)
+
+    for i, column in enumerate(data.drop(["id", "date", "lat", "long"], axis=1).columns):
+        row = math.ceil((i + 1) / 3)
+        col = (i % 3) + 1
+        
+        scatter_fig = px.scatter(data, x=f"{column}", y="price", trendline="ols", size="price")
+        scatter_trace = scatter_fig['data'][0]
+        fig.add_trace(scatter_trace, row=row, col=col)
+
+    fig.update_layout(
+        title_text="Attributes distribution",
+        #showlegend=False,
+        height=2000,
+        width=1500
+    )
+
+    # Exibir gráfico no Streamlit
+    st.plotly_chart(fig)
 
     return None
 
@@ -346,7 +337,7 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path = '/data/raw/data_raw.csv'
+    path = '../data/raw/data_raw.csv'
     data = get_data(path)
 
     # get geofile
