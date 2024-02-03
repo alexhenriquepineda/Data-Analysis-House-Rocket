@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 #COPY app app
 
-COPY data/raw/data_raw.csv /app/data/raw/
+#COPY data/raw/data_raw.csv /app/data/raw/
 
 EXPOSE 8501
 

@@ -338,9 +338,10 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    dir_name = os.path.abspath(os.path.dirname(__file__))
-    location = os.path.join(dir_name, '/data/raw/data_raw.csv')
-    data = pd.read_csv(location)
+    file_path = 'dataset/kc_house_data.csv'
+
+    # Lê o arquivo CSV usando o pandas
+    data = pd.read_csv(file_path)
     #path = '/data/raw/data_raw.csv'
     #data = get_data(path)
 
