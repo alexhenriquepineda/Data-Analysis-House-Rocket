@@ -6,6 +6,6 @@ services:
     ports:
       - "8502:8501"
     volumes:
-      - ./app:/app
-      - ./app/dataset:/app/dataset
+      - ./dashboard.py:/dashboard.py
+      - ./kc_house_data.csv:/kc_house_data.csv
     command: ["streamlit", "run", "dashboard.py"]

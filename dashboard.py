@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path_data = "/dataset/kc_house_data.csv"
+    path_data = "kc_house_data.csv"
     data = get_data(path_data)
     #data = pd.read_csv(path_data)
 
