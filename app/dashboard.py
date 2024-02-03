@@ -18,7 +18,7 @@ pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
 st.set_page_config( layout='wide')
 
-@st.cache_data()
+
 def get_data( path ):
     data = pd.read_csv(path)
 
