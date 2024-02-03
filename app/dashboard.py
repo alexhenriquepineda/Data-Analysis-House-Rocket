@@ -1,3 +1,4 @@
+import os
 import math
 import folium
 import geopandas
@@ -162,7 +163,7 @@ def bivariate_analysis(data):
 
     fig.update_layout(
         title_text="Attributes distribution",
-        #showlegend=False,
+        showlegend=False,
         height=2000,
         width=1500
     )
@@ -337,8 +338,11 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path = '/data/raw/data_raw.csv'
-    data = get_data(path)
+    dir_name = os.path.abspath(os.path.dirname(__file__))
+    location = os.path.join(dir_name, '/data/raw/data_raw.csv')
+    data = pd.read_csv(location)
+    #path = '/data/raw/data_raw.csv'
+    #data = get_data(path)
 
     # get geofile
     #url = 'http://data-seattlecitygis.opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson'
