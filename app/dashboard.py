@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -8,6 +9,11 @@ from streamlit_folium import folium_static
 from folium.plugins import MarkerCluster
 
 import plotly.express as px
+import plotly.graph_objs as go
+from matplotlib import pyplot as plt
+import seaborn as sns
+from plotly.subplots import make_subplots
+
 
 from streamlit_folium import folium_static
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
@@ -54,7 +60,7 @@ def set_feature( data ):
     #data['sqft_lot'] = data['sqft_lot'].apply(lambda x: x / 10,76)
 
     #add feature price/m2
-    data['price_m2'] = data['price'] / data['sqft_lot']
+    data['price_m2'] = data['price'] / (data['sqft_lot'] * 0.092903)
 
     return data
 
@@ -64,38 +70,29 @@ def overview_data( data ):
     # DATA OVERVIEW
     #===============
 
-    f_attributes = st.sidebar.multiselect( 'Enter COLUMNS', data.columns)
-    f_zipcode = st.sidebar.multiselect('Enter ZIPCODE', data['zipcode'].unique())
+    #f_attributes = st.sidebar.multiselect( 'Enter COLUMNS', data.columns)
+    #f_zipcode = st.sidebar.multiselect('Enter ZIPCODE', data['zipcode'].unique())
 
     st.title( 'DATA OVERVIEW' )
 
-    if ( f_zipcode != [] ) & ( f_attributes != [] ):
-        data = data.loc[data['zipcode'].isin( f_zipcode ), f_attributes]
-    elif ( f_zipcode != [] ) & (f_attributes == [] ):
-        data = data.loc[data['zipcode'].isin(f_zipcode), :]  
-    elif (f_zipcode == [] ) & ( f_attributes != []):
-        data = data.loc[:, f_attributes]
-    else:
-        data = data.copy()
+    numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+    numerics_columns = data.select_dtypes(include=numerics)
+    no_numerics_columns = data.select_dtypes(exclude=numerics)
 
-    st.dataframe( data )
+
+
+    #if ( f_zipcode != [] ) & ( f_attributes != [] ):
+    #    data = data.loc[data['zipcode'].isin( f_zipcode ), f_attributes]
+    #elif ( f_zipcode != [] ) & (f_attributes == [] ):
+    #    data = data.loc[data['zipcode'].isin(f_zipcode), :]  
+    #elif (f_zipcode == [] ) & ( f_attributes != []):
+    #    data = data.loc[:, f_attributes]
+    #else:
+    #    data = data.copy()
+
+    st.dataframe( data.head() )
 
     c1, c2 = st.columns( (1,1) )
-    #Average Metrics
-    df1 = data[['id', 'zipcode']].groupby( 'zipcode' ).count().reset_index()
-    df2 = data[['price', 'zipcode']].groupby( 'zipcode' ).mean().reset_index()
-    df3 = data[['sqft_living', 'zipcode']].groupby( 'zipcode' ).mean().reset_index()
-    df4 = data[['price_m2', 'zipcode']].groupby( 'zipcode' ).mean().reset_index()
-
-    #merge
-    m1 = pd.merge(df1, df2, how='inner', on='zipcode')
-    m2 = pd.merge(m1, df3, how='inner', on='zipcode')
-    df = pd.merge(m2, df4, how='inner', on='zipcode')
-
-    df.columns = ['ZIPCODE', 'TOTAL HOUSES', 'PRICE', 'SQRT LIVING', 'PRICE/M2']
-
-    c1.header( ' Average Metrics' )
-    c1.dataframe( df, height=600 )
 
     #Statistic Descriptive
     num_attributes = data.select_dtypes( include=['int64', 'float64'] )
@@ -109,8 +106,95 @@ def overview_data( data ):
     df1 = pd.concat( [max_, min_, media, mediana, std], axis=1).reset_index()
     df1.columns = ['ATTRIBUTES', 'MAX', 'MIN', 'MEAN', 'MEDIAN', 'STD']
 
-    c2.header( 'Descriptive Analysis' )
-    c2.dataframe( df1, height=660 )
+    c1.header( 'Descriptive Analysis' )
+    c1.dataframe( df1, height=660 )
+
+    text = f"""
+        1- In this dataset we have {data.shape[0]} houses and {data.shape[1]} attributes. With {numerics_columns.shape[1]} numerics attributes and {no_numerics_columns.shape[1]} non-numeric attribute;
+
+        2- In this sample, we have {len(data["zipcode"].unique())} zipcodes available to analysis; 
+    """
+
+    c2.text_area("Overview", text, height=700)
+
+
+
+    return None
+
+def univariate_analysis(data):
+
+    st.header( 'Univariate Analysis' )
+    c1, c2 = st.columns(2)
+    fig = px.box(data, y='price', title='Boxplot of Price')
+    c1.plotly_chart(fig, use_container_width=True)
+
+
+    mediana_rent = data.price.median()
+
+    mediana_rent_format = (
+        "$ {:,.2f}".format(mediana_rent)
+        .replace(",", "v")
+        .replace(".", ",")
+        .replace("v", ".")
+    )
+
+    graph = [go.Histogram(x=data.price, 
+                        nbinsx=50, 
+                        marker=dict(color='blue'))]
+
+    line = [go.Scatter(x=[mediana_rent, mediana_rent], 
+                    y=[0, 8200], 
+                    mode='lines',
+                    line=dict(color='lightblue', dash='dash'), 
+                    showlegend=True,
+                    name=f"Median = {mediana_rent_format}")]
+
+    fig = go.Figure(data=graph+line)
+
+    fig.update_layout(title_text='Price Histogram', 
+                    xaxis_title='Price',
+                    yaxis_title='Count',
+                    autosize=False, 
+                    width=900, 
+                    height=500)
+    
+    c2.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe( data[["price"]].describe().T)
+
+    text = """
+    In these graphs, it is evident that numerous outliers exist in the price attribute. Additionally, there is an asymmetric distribution to the left, characterized by a high concentration of data falling within the range of $300,000 to $600,000
+    """
+
+    st.text_area("Target Analysis", text, height=100)
+
+    # Criação de subplots
+    num_plots = len(data.drop(["id", "date", "lat", "long"], axis=1).columns)
+    num_rows = math.ceil(num_plots / 3)  # Calcular o número de linhas necessárias
+    fig = make_subplots(rows=num_rows, cols=3, subplot_titles=data.drop(["id", "date", "lat", "long"], axis=1).columns)
+
+    # Adição de histogramas aos subplots
+    for i, column in enumerate(data.drop(["id", "date", "lat", "long"], axis=1).columns):
+        row = math.ceil((i + 1) / 3)  # Calcular o número da linha para o subplot atual
+        col = (i % 3) + 1  # Calcular o número da coluna para o subplot atual
+        histogram = go.Histogram(x=data[column], name=column)
+        fig.add_trace(histogram, row=row, col=col)
+
+
+    # Ajuste do tamanho dos gráficos
+    fig.update_layout(
+        title_text="Attributes distribution",
+        showlegend=False,
+        height=2000,  # Ajuste a altura desejada
+        width=1500   # Ajuste a largura desejada
+    )
+    st.plotly_chart(fig)
+
+
+    return None
+
+def bivariate_analysis(data):
+    st.header( 'Bivariate Analysis' )
 
     return None
 
@@ -124,14 +208,14 @@ def portifolio_density( data ):
     c1, c2 = st.columns( (1,1) )
     c1.header( 'Portifolio Density' )
 
-    df=data.copy()
+    data=data.copy()
 
     #Base Map - Folium
     density_map = folium.Map( location=[data['lat'].mean(), data['long'].mean()], default_zoom_start=15)
 
     marker_cluster = MarkerCluster().add_to(density_map)
 
-    for name, row in df.iterrows():
+    for name, row in data.iterrows():
         folium.Marker( [row['lat'], row['long'] ], popup='Price R${} on: {}. Features: SQFT {}. BEDROOMS {}. BATHROOMS {}. YEAR BUILT {}.'.format(row['price'], row['date'], row['sqft_living'], row['bedrooms'], row['bathrooms'], row['yr_built'])).add_to(marker_cluster)
 
     with c1:
@@ -140,15 +224,15 @@ def portifolio_density( data ):
 
     #Region Price Map
     c2.header('Price Density')
-    df=data.copy()
-    df = data[['price', 'zipcode']].groupby( 'zipcode' ).mean().reset_index().rename(columns={'zipcode': 'ZIP', 'price': 'PRICE'})
-    #df.columns=['ZIP', 'PRICE']
-    #geofile = geofile[geofile['ZIP'].isin( df['ZIP'].tolist()) ]
+    data=data.copy()
+    data = data[['price', 'zipcode']].groupby( 'zipcode' ).mean().reset_index().rename(columns={'zipcode': 'ZIP', 'price': 'PRICE'})
+    #data.columns=['ZIP', 'PRICE']
+    #geofile = geofile[geofile['ZIP'].isin( data['ZIP'].tolist()) ]
 
 
     region_price_map = folium.Map( location=[data['lat'].mean(), data['long'].mean()], default_zoom_start=15)
 
-    #region_price_map.choropleth( data = df, columns=['ZIP', 'PRICE'], key_on='feature.properties.ZIP', fill_color='YlOrRd', fill_opacity = 0.7, line_opacity = 0.2, legend_name='AVG PRICE')
+    #region_price_map.choropleth( data = data, columns=['ZIP', 'PRICE'], key_on='feature.properties.ZIP', fill_color='YlOrRd', fill_opacity = 0.7, line_opacity = 0.2, legend_name='AVG PRICE')
 
     with c2:
         folium_static( region_price_map )
@@ -170,14 +254,14 @@ def commercial_distribution( data ):
     max_year_built = int( data['yr_built'].max() )
 
     st.sidebar.subheader( 'Select Max Year Built' )
-    f_year_built = st.sidebar.slider( 'Year Built', min_year_built, max_year_built, max_year_built )
+    #f_year_built = st.sidebar.slider( 'Year Built', min_year_built, max_year_built, max_year_built )
     st.header( 'Average Price per Year Built' )
 
-    df = data.loc[data['yr_built'] < f_year_built]
+    #data = data.loc[data['yr_built'] < f_year_built]
 
 
-    df = df[['yr_built', 'price']].groupby('yr_built').mean().reset_index()
-    fig = px.line(df, x='yr_built', y='price')
+    data = data[['yr_built', 'price']].groupby('yr_built').mean().reset_index()
+    fig = px.line(data, x='yr_built', y='price')
     st.plotly_chart(fig, use_container_width=True)
 
     # ------- Average Price per Day
@@ -187,17 +271,17 @@ def commercial_distribution( data ):
     max_date = datetime.strptime( data['date'].max(), '%Y-%m-%d' )
 
     #criando o filtro
-    st.sidebar.subheader( 'Select Max Day' )
-    f_date = st.sidebar.slider( 'Day', min_date, max_date, max_date )
-    st.header( 'Average Price per Day' )
+    #st.sidebar.subheader( 'Select Max Day' )
+    #f_date = st.sidebar.slider( 'Day', min_date, max_date, max_date )
+    #st.header( 'Average Price per Day' )
 
     #filtering dataset
     data['date'] = pd.to_datetime( data['date'])
-    df = data.loc[data['date'] < f_date]
+    #data = data.loc[data['date'] < f_date]
 
     #plot
-    df = df[['date', 'price']].groupby('date').mean().reset_index()
-    fig = px.line(df, x='date', y='price')
+    data = data[['date', 'price']].groupby('date').mean().reset_index()
+    fig = px.line(data, x='date', y='price')
     st.plotly_chart(fig, use_container_width=True)
 
     return None
@@ -218,9 +302,9 @@ def histogram_graph( data ):
 
     f_price = st.sidebar.slider('Price', min_price, max_price, avg_price)
 
-    df = data.loc[data['price'] < f_price]
+    data = data.loc[data['price'] < f_price]
 
-    fig = px.histogram(df, x='price', nbins=50)
+    fig = px.histogram(data, x='price', nbins=50)
     st.plotly_chart( fig, use_container_width=True)
 
     return None
@@ -239,36 +323,36 @@ def attributes_distribution( data ):
     #filter
     c1, c2 = st.columns(2)
     f_bedrooms = st.sidebar.selectbox('Max Number of bedrooms', sorted( set( data['bedrooms'].unique() ) ) ) 
-    df = data.loc[data['bedrooms'] < f_bedrooms]
+    data = data.loc[data['bedrooms'] < f_bedrooms]
     #Plot
-    fig = px.histogram( df, x='bedrooms', nbins=19)
+    fig = px.histogram( data, x='bedrooms', nbins=19)
     c1.header('Houses per Bedrooms')
     c1.plotly_chart( fig, use_container_width=True)
 
     #House per bathrooms
     f_bathrooms = st.sidebar.selectbox('Max Number of bathrooms', sorted( set( data['bathrooms'].unique() ) ) )
-    df = data.loc[data['bathrooms'] < f_bathrooms]
-    fig = px.histogram( df, x='bathrooms', nbins=19)
+    data = data.loc[data['bathrooms'] < f_bathrooms]
+    fig = px.histogram( data, x='bathrooms', nbins=19)
     c2.header('Houses per Bathrooms')
     c2.plotly_chart( fig, use_container_width=True)
 
     #House per floors
     c1, c2 = st.columns(2)
     f_floors = st.sidebar.selectbox('Max Number of Floors', sorted( set( data['floors'].unique() ) ) )
-    df = data.loc[data['floors'] < f_floors]
+    data = data.loc[data['floors'] < f_floors]
     c1.header('Houses per Floors')
-    fig = px.histogram( df, x='floors', nbins=19)
+    fig = px.histogram( data, x='floors', nbins=19)
     c1.plotly_chart( fig, use_container_width=True)
 
     #House per waterview
     c2.header('Waterview')
     f_waterfront = st.sidebar.checkbox('Only Houses with Water View')
     if f_waterfront:
-        df = data[data['waterfront'] == 1]
+        data = data[data['waterfront'] == 1]
     else:
-        df = data.copy()
+        data = data.copy()
 
-    fig = px.histogram( df, x='waterfront', nbins=10)
+    fig = px.histogram( data, x='waterfront', nbins=10)
     c2.plotly_chart( fig, use_container_width=True)
 
     return None
@@ -279,7 +363,7 @@ if __name__ == '__main__':
 
     #Data Extration
     #get data
-    path = 'data/raw/data_raw.csv'
+    path = '/data/raw/data_raw.csv'
     data = get_data(path)
 
     # get geofile
@@ -293,10 +377,14 @@ if __name__ == '__main__':
     #Gráficos de Overview
     overview_data( data )
 
-    portifolio_density( data )
+    univariate_analysis(data)
 
-    commercial_distribution( data )
+    bivariate_analysis(data)
 
-    histogram_graph( data )
+    #portifolio_density( data )
 
-    attributes_distribution( data )
+    #commercial_distribution( data )
+
+    #histogram_graph( data )
+
+    #attributes_distribution( data )
