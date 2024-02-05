@@ -162,7 +162,7 @@ def bivariate_analysis(data):
         fig.add_trace(scatter_trace, row=row, col=col)
 
     fig.update_layout(
-        title_text="Attributes distribution",
+        title_text="Attributes x Price",
         showlegend=False,
         height=2000,
         width=1500
